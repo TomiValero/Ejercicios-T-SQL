@@ -1,0 +1,213 @@
+USE Univ
+GO
+-- 1 Listado con apellidos y nombres de los usuarios que no se hayan inscripto a cursos durante el año 2019.
+-- SELECT D.Apellidos, D.Nombres FROM Datos_Personales D
+-- WHERE D.ID <> ALL(SELECT I.IDUsuario FROM Inscripciones I WHERE YEAR(I.Fecha) = 2019)
+
+-- 2 Listado con apellidos y nombres de los usuarios que se hayan inscripto a cursos pero no hayan 
+--realizado ningún pago.
+-- SELECT D.Apellidos, D.Nombres FROM Datos_Personales D
+-- INNER JOIN Inscripciones I ON I.IDUsuario = D.ID
+-- LEFT JOIN Pagos P ON P.IDInscripcion = I.ID
+-- WHERE P.ID IS NULL
+
+-- 3 Listado de países que no tengan usuarios relacionados.
+-- SELECT P.Nombre FROM Paises P
+-- LEFT JOIN Localidades L ON L.IDPais = P.ID
+-- WHERE L.ID <> ALL(SELECT D.IDLocalidad FROM Datos_Personales D)
+
+-- 4 Listado de clases cuya duración sea mayor a la duración promedio.
+-- SELECT CL.Nombre FROM Clases CL
+-- WHERE CL.Duracion >(SELECT AVG(CL.Duracion) FROM Clases CL)
+
+-- 5 Listado de contenidos cuyo tamaño sea mayor al tamaño de todos los contenidos de tipo 'Audio de alta calidad'.
+-- SELECT C.ID FROM Contenidos C
+-- WHERE C.Tamaño > ALL
+-- (
+--     SELECT C.Tamaño FROM Contenidos C
+--     INNER JOIN TiposContenido T ON T.ID = C.IDTipo
+--     WHERE T.Nombre = 'Audio de alta calidad' 
+-- )
+-- 6 Listado de contenidos cuyo tamaño sea menor al tamaño de algún contenido de tipo 'Audio de alta calidad'.
+-- SELECT C.ID FROM Contenidos C
+-- WHERE C.Tamaño < ANY
+-- (
+--     SELECT C.Tamaño FROM Contenidos C
+--     INNER JOIN TiposContenido T ON T.ID = C.IDTipo
+--     WHERE T.Nombre = 'Audio de alta calidad' 
+-- )
+
+-- 7 Listado con nombre de país y la cantidad de usuarios de género masculino y la cantidad de usuarios de
+-- género femenino que haya registrado.
+-- SELECT P.Nombre, 
+-- (
+--     SELECT COUNT(*) FROM Datos_Personales D 
+--     INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--     WHERE D.Genero = 'M' AND L.IDPais = P.ID
+-- ) AS CANTHOMBRES,
+-- (
+--     SELECT COUNT(*) FROM Datos_Personales D 
+--     INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--     WHERE D.Genero = 'F' AND L.IDPais = P.ID
+-- ) AS CANTMUJERES
+-- FROM Paises P
+
+-- 8 Listado con apellidos y nombres de los usuarios y la cantidad de inscripciones
+-- realizadas en el 2019 y
+-- la cantidad de inscripciones realizadas en el 2020.
+-- SELECT D.Apellidos, D.Nombres, 
+-- (
+--     SELECT COUNT(*) FROM Inscripciones I 
+--     WHERE I.IDUsuario = D.ID AND YEAR(I.Fecha) = 2019
+-- ) AS INS2019,
+-- (
+--     SELECT COUNT(*) FROM Inscripciones I 
+--     WHERE I.IDUsuario = D.ID AND YEAR(I.Fecha) = 2020
+-- ) AS INS2020
+-- FROM Datos_Personales D
+
+-- 9 Listado con nombres de los cursos y la cantidad de idiomas de cada tipo. Es decir,
+-- la cantidad de idiomas de audio 2, la cantidad de subtítulos 1 y la cantidad de texto de video 3.
+-- SELECT C.Nombre,
+-- (
+--     SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--     WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 1
+-- ) AS CANTSUB,
+-- (
+--     SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--     WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 2
+-- ) AS CANTAUD,
+-- (
+--     SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--     WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 3
+-- ) AS CANTVID
+-- FROM Cursos C
+
+-- 10 Listado con apellidos y nombres de los usuarios, nombre de usuario y cantidad de cursos de
+-- nivel 'Principiante' que realizó y cantidad de cursos de nivel 'Avanzado' que realizó.
+-- SELECT D.Apellidos, D.Nombres, U.NombreUsuario,
+-- (
+--     SELECT COUNT(*) FROM Cursos C
+--     INNER JOIN Niveles N ON N.ID = C.IDNivel
+--     INNER JOIN Inscripciones I ON I.IDCurso = C.ID
+--     WHERE I.IDUsuario = U.ID AND N.Nombre = 'Principiante'
+-- ) AS CANTPRINCI,
+-- (
+--     SELECT COUNT(*) FROM Cursos C
+--     INNER JOIN Niveles N ON N.ID = C.IDNivel
+--     INNER JOIN Inscripciones I ON I.IDCurso = C.ID
+--     WHERE I.IDUsuario = U.ID AND N.Nombre = 'Avanzado'
+-- ) AS CANTAVANZA
+-- FROM Usuarios U
+-- INNER JOIN Datos_Personales D ON D.ID = U.ID
+
+-- 11 Listado con nombre de los cursos y la recaudación de inscripciones de usuarios de
+-- género femenino .
+--que se inscribieron y la recaudación de inscripciones de usuarios de género masculino.
+-- SELECT C.Nombre,
+-- (
+--     SELECT SUM(P.Importe) FROM Pagos P
+--     INNER JOIN Inscripciones I ON I.ID = P.IDInscripcion
+--     INNER JOIN Datos_Personales D ON D.ID = I.IDUsuario
+--     WHERE D.Genero = 'M' AND I.IDCurso = C.ID
+-- ) AS RECHOMBRES,
+-- (
+--     SELECT SUM(P.Importe) FROM Pagos P
+--     INNER JOIN Inscripciones I ON I.ID = P.IDInscripcion
+--     INNER JOIN Datos_Personales D ON D.ID = I.IDUsuario
+--     WHERE D.Genero = 'F' AND I.IDCurso = C.ID
+-- ) AS RECMUJERES
+-- FROM Cursos C
+
+-- 12 Listado con nombre de país de aquellos que hayan registrado más usuarios de
+-- género masculino que de 
+--género femenino.
+-- SELECT TB.NOMBRE, TB.CANTHOMBRES, TB.CANTMUJERES FROM
+-- (
+--     SELECT P.Nombre AS NOMBRE, 
+--     (
+--         SELECT COUNT(*) FROM Datos_Personales D 
+--         INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--         WHERE D.Genero = 'M' AND L.IDPais = P.ID
+--     ) AS CANTHOMBRES,
+--     (
+--         SELECT COUNT(*) FROM Datos_Personales D 
+--         INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--         WHERE D.Genero = 'F' AND L.IDPais = P.ID
+--     ) AS CANTMUJERES
+--     FROM Paises P 
+-- ) AS TB
+-- WHERE TB.CANTHOMBRES > TB.CANTMUJERES
+
+-- 13 Listado con nombre de país de aquellos que hayan registrado más usuarios de género 
+--masculino que de
+-- género femenino pero que haya registrado al menos un usuario de género femenino.
+-- SELECT TB.NOMBRE, TB.CANTHOMBRES, TB.CANTMUJERES FROM
+-- (
+--     SELECT P.Nombre AS NOMBRE, 
+--     (
+--         SELECT COUNT(*) FROM Datos_Personales D 
+--         INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--         WHERE D.Genero = 'M' AND L.IDPais = P.ID
+--     ) AS CANTHOMBRES,
+--     (
+--         SELECT COUNT(*) FROM Datos_Personales D 
+--         INNER JOIN Localidades L ON L.ID = D.IDLocalidad
+--         WHERE D.Genero = 'F' AND L.IDPais = P.ID
+--     ) AS CANTMUJERES
+--     FROM Paises P 
+-- ) AS TB
+-- WHERE TB.CANTHOMBRES > TB.CANTMUJERES AND TB.CANTMUJERES > 0
+
+-- 14 Listado de cursos que hayan registrado la misma cantidad de idiomas de audio que de subtítulos.
+-- SELECT TB.NOMBRE, TB.CANTSUB, TB.CANTAUD FROM 
+-- (
+--     SELECT C.Nombre AS NOMBRE,
+--     (
+--         SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--         WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 1
+--     ) AS CANTSUB,
+--     (
+--         SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--         WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 2
+--     ) AS CANTAUD,
+--     (
+--         SELECT COUNT(*) FROM Idiomas_x_Curso IC
+--         WHERE IC.IDCurso = C.ID AND IC.IDFormatoIdioma = 3
+--     ) AS CANTVID
+--     FROM Cursos C
+-- ) AS TB
+-- WHERE TB.CANTAUD = TB.CANTSUB
+
+-- 15 Listado de usuarios que hayan realizado más cursos en el año 2018 que en el 2019 y a su 
+--vez más cursos en el año 2019 que en el 2020.
+-- SELECT TB.NOMUSUARIO, TB.INS2018, TB.INS2019, TB.INS2020 FROM 
+-- (
+--     SELECT U.NombreUsuario AS NOMUSUARIO, 
+--     (
+--         SELECT COUNT(*) FROM Inscripciones I 
+--         WHERE I.IDUsuario = U.ID AND YEAR(I.Fecha) = 2018
+--     ) AS INS2018,
+--     (
+--         SELECT COUNT(*) FROM Inscripciones I 
+--         WHERE I.IDUsuario = U.ID AND YEAR(I.Fecha) = 2019
+--     ) AS INS2019,
+--     (
+--         SELECT COUNT(*) FROM Inscripciones I 
+--         WHERE I.IDUsuario = U.ID AND YEAR(I.Fecha) = 2020
+--     ) AS INS2020
+--     FROM Usuarios U
+-- ) AS TB
+-- WHERE TB.INS2018 > TB.INS2019 AND TB.INS2019 > TB.INS2020
+
+-- 16 Listado de apellido y nombres de usuarios que hayan realizado cursos pero nunca se hayan certificado.
+ --Aclaración: Listado con apellidos y nombres de usuarios que hayan realizado al menos un curso y 
+ --no se hayan certificado nunca..
+ 
+-- SELECT D.Nombres, D.Apellidos FROM Datos_Personales D
+-- WHERE D.ID = ANY(
+--     SELECT I.IDUsuario FROM Inscripciones I
+--     LEFT JOIN Certificaciones CE ON CE.IDInscripcion = I.ID
+--     WHERE CE.IDInscripcion IS NULL
+-- )
+
